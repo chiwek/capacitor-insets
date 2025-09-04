@@ -1,0 +1,28 @@
+{
+  "name": "@chiwek/capacitor-insets",
+  "version": "1.0.0",
+  "description": "Expose WindowInsets/safe area to JS (bottom nav/gesture bar height, etc.)",
+  "author": "You",
+  "license": "MIT",
+  "files": ["dist/", "android/", "ios/", "README.md"],
+  "main": "dist/plugin.cjs.js",
+  "module": "dist/plugin.esm.js",
+  "types": "dist/definitions.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rimraf dist",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "peerDependencies": {
+    "@capacitor/core": "^6.0.0 || ^7.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/core": "^7.0.0",
+    "rimraf": "^6.0.0",
+    "typescript": "^5.5.0"
+  },
+  "capacitor": {
+    "ios": { "src": "ios" },
+    "android": { "src": "android" }
+  }
+}
