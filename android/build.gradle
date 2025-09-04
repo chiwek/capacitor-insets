@@ -1,26 +1,25 @@
-plugins {
-  id 'com.android.library'
-}
+plugins { id 'com.android.library' }
 
 android {
   namespace "com.chiwek.insets"
-  compileSdkVersion rootProject.ext.compileSdkVersion
+  compileSdkVersion (rootProject.ext.has('compileSdkVersion') ? rootProject.ext.compileSdkVersion : 35)
 
   defaultConfig {
-    minSdkVersion rootProject.ext.minSdkVersion
-    targetSdkVersion rootProject.ext.targetSdkVersion
+    minSdkVersion (rootProject.ext.has('minSdkVersion') ? rootProject.ext.minSdkVersion : 23)
+    targetSdkVersion (rootProject.ext.has('targetSdkVersion') ? rootProject.ext.targetSdkVersion : 35)
     consumerProguardFiles 'consumer-rules.pro'
   }
 
-  // Osloni se na toolchain iz host app-a (Cap 6/7), ne forsiramo ovde.
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_17
+    targetCompatibility JavaVersion.VERSION_17
+  }
 }
 
-repositories {
-  google()
-  mavenCentral()
-}
+repositories { google(); mavenCentral() }
 
 dependencies {
   implementation project(':capacitor-android')
+  implementation "androidx.appcompat:appcompat:1.7.0"
   implementation "androidx.core:core-ktx:1.13.1"
 }

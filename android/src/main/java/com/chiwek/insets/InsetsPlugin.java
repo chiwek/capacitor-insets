@@ -1,55 +1,76 @@
 package com.chiwek.insets;
 
-import android.graphics.Insets;
 import android.view.View;
 
+import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
+import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
-import com.getcapacitor.annotation.PluginMethod;
 
 @CapacitorPlugin(name = "Insets")
 public class InsetsPlugin extends Plugin {
 
+  private boolean autoPadEnabled = false;
+
   @Override
   public void load() {
-    // Listen for WindowInsets and push events to JS
     getBridge().getWebView().post(() -> {
       View webView = getBridge().getWebView();
       ViewCompat.setOnApplyWindowInsetsListener(webView, (v, insets) -> {
         Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-        JSObject payload = new JSObject();
-        payload.put("top", bars.top);
-        payload.put("bottom", bars.bottom);
-        payload.put("left", bars.left);
-        payload.put("right", bars.right);
-        notifyListeners("insetsChange", payload);
+
+        // Ako je autoPad uključen – podešavamo padding i CONSUME-ujemo insets
+        if (autoPadEnabled) {
+          v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(), bars.bottom);
+          notifyInsets(bars);
+          return WindowInsetsCompat.CONSUMED;
+        }
+
+        // U "read-only" režimu samo šaljemo event i ništa ne diramo
+        notifyInsets(bars);
         return insets;
       });
       ViewCompat.requestApplyInsets(webView);
     });
   }
 
+  private void notifyInsets(Insets bars) {
+    JSObject payload = new JSObject();
+    payload.put("top", bars.top);
+    payload.put("bottom", bars.bottom);
+    payload.put("left", bars.left);
+    payload.put("right", bars.right);
+    notifyListeners("insetsChange", payload);
+  }
+
   @PluginMethod
   public void get(PluginCall call) {
     View root = getActivity().getWindow().getDecorView();
     WindowInsetsCompat wi = ViewCompat.getRootWindowInsets(root);
-
-    int top = 0, bottom = 0, left = 0, right = 0;
-    if (wi != null) {
-      Insets bars = wi.getInsets(WindowInsetsCompat.Type.systemBars());
-      top = bars.top; bottom = bars.bottom; left = bars.left; right = bars.right;
-    }
+    Insets bars = (wi != null) ? wi.getInsets(WindowInsetsCompat.Type.systemBars()) : Insets.NONE;
 
     JSObject res = new JSObject();
-    res.put("top", top);
-    res.put("bottom", bottom);
-    res.put("left", left);
-    res.put("right", right);
+    res.put("top", bars.top);
+    res.put("bottom", bars.bottom);
+    res.put("left", bars.left);
+    res.put("right", bars.right);
     call.resolve(res);
+  }
+
+  @PluginMethod
+  public void autoPad(PluginCall call) {
+    boolean enable = call.getBoolean("enable", true);
+    autoPadEnabled = enable;
+    // Forsiraj re-apply
+    getActivity().runOnUiThread(() -> {
+      View webView = getBridge().getWebView();
+      ViewCompat.requestApplyInsets(webView);
+      call.resolve();
+    });
   }
 }
