@@ -7,7 +7,7 @@
   },
   "bugs": { "url": "https://github.com/chiwek/capacitor-insets/issues" },
   "homepage": "https://github.com/chiwek/capacitor-insets#readme",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Expose Android WindowInsets / iOS safe area to JS (bottom nav/gesture bar height, etc.)",
   "author": "chiwek",
   "license": "MIT",
