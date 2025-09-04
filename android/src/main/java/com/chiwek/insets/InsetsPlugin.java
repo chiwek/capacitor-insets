@@ -16,6 +16,8 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 public class InsetsPlugin extends Plugin {
 
   private boolean autoPadEnabled = false;
+  private boolean padTop = false;
+  private boolean padBottom = true; // default behavior
 
   @Override
   public void load() {
@@ -24,17 +26,22 @@ public class InsetsPlugin extends Plugin {
       ViewCompat.setOnApplyWindowInsetsListener(webView, (v, insets) -> {
         Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
 
-        // Ako je autoPad uključen – podešavamo padding i CONSUME-ujemo insets
+        // Auto-pad branch: set padding and CONSUME system bar insets
         if (autoPadEnabled) {
-          v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(), bars.bottom);
+          int left   = v.getPaddingLeft();
+          int right  = v.getPaddingRight();
+          int top    = padTop    ? bars.top    : v.getPaddingTop();
+          int bottom = padBottom ? bars.bottom : v.getPaddingBottom();
+          v.setPadding(left, top, right, bottom);
           notifyInsets(bars);
           return WindowInsetsCompat.CONSUMED;
         }
 
-        // U "read-only" režimu samo šaljemo event i ništa ne diramo
+        // Read-only branch: just notify JS
         notifyInsets(bars);
         return insets;
       });
+
       ViewCompat.requestApplyInsets(webView);
     });
   }
@@ -65,8 +72,12 @@ public class InsetsPlugin extends Plugin {
   @PluginMethod
   public void autoPad(PluginCall call) {
     boolean enable = call.getBoolean("enable", true);
+    String edges = call.getString("edges", "bottom");
+
     autoPadEnabled = enable;
-    // Forsiraj re-apply
+    padTop = "top".equals(edges) || "both".equals(edges);
+    padBottom = !"top".equals(edges); // bottom for 'bottom' or 'both'
+
     getActivity().runOnUiThread(() -> {
       View webView = getBridge().getWebView();
       ViewCompat.requestApplyInsets(webView);
