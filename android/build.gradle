@@ -1,11 +1,9 @@
 plugins {
   id 'com.android.library'
-  id 'org.jetbrains.kotlin.android'
 }
 
 android {
-  namespace "com.yourorg.insets"
-  // Inherit from host app (Cap 6/7 define these in rootProject.ext)
+  namespace "com.chiwek.insets"
   compileSdkVersion rootProject.ext.compileSdkVersion
 
   defaultConfig {
@@ -14,17 +12,15 @@ android {
     consumerProguardFiles 'consumer-rules.pro'
   }
 
-  // Let the app control Java/Kotlin toolchains; works for Cap 6 & 7
-  kotlinOptions { /* jvmTarget inherits from root; leave empty for compatibility */ }
+  // Osloni se na toolchain iz host app-a (Cap 6/7), ne forsiramo ovde.
 }
 
 repositories {
-  mavenCentral()
   google()
+  mavenCentral()
 }
 
 dependencies {
-  // Use the host app’s Capacitor Android module (Cap 6 & 7)
   implementation project(':capacitor-android')
   implementation "androidx.core:core-ktx:1.13.1"
 }

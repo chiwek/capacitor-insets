@@ -1,10 +1,17 @@
 {
   "name": "@chiwek/capacitor-insets",
+  "publishConfig": { "access": "public" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chiwek/capacitor-insets.git"
+  },
+  "bugs": { "url": "https://github.com/chiwek/capacitor-insets/issues" },
+  "homepage": "https://github.com/chiwek/capacitor-insets#readme",
   "version": "1.0.0",
-  "description": "Expose WindowInsets/safe area to JS (bottom nav/gesture bar height, etc.)",
-  "author": "You",
+  "description": "Expose Android WindowInsets / iOS safe area to JS (bottom nav/gesture bar height, etc.)",
+  "author": "chiwek",
   "license": "MIT",
-  "files": ["dist/", "android/", "ios/", "README.md"],
+  "files": ["dist/", "android/", "ios/", "README.md", "LICENSE"],
   "main": "dist/plugin.cjs.js",
   "module": "dist/plugin.esm.js",
   "types": "dist/definitions.d.ts",
