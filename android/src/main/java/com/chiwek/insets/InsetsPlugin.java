@@ -1,9 +1,11 @@
 package com.chiwek.insets;
 
 import android.view.View;
+import android.view.Window;
 
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.getcapacitor.JSObject;
@@ -15,18 +17,30 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 @CapacitorPlugin(name = "Insets")
 public class InsetsPlugin extends Plugin {
 
+  private static final boolean DECOR_FITS_SYSTEM_WINDOWS = false;
+
   private boolean autoPadEnabled = false;
   private boolean padTop = false;
-  private boolean padBottom = true; // default behavior
+  private boolean padBottom = true; // default
+  private View targetView; // root na koji kačimo listener
 
   @Override
   public void load() {
-    getBridge().getWebView().post(() -> {
-      View webView = getBridge().getWebView();
-      ViewCompat.setOnApplyWindowInsetsListener(webView, (v, insets) -> {
-        Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+    getActivity().runOnUiThread(() -> {
+      final Window window = getActivity().getWindow();
 
-        // Auto-pad branch: set padding and CONSUME system bar insets
+      WindowCompat.setDecorFitsSystemWindows(window, DECOR_FITS_SYSTEM_WINDOWS);
+
+      View content = window.getDecorView().findViewById(android.R.id.content);
+      targetView = (content != null) ? content : getBridge().getWebView();
+
+      ViewCompat.setOnApplyWindowInsetsListener(targetView, (v, insets) -> {
+        final int types = WindowInsetsCompat.Type.statusBars()
+                      | WindowInsetsCompat.Type.navigationBars()
+                      | WindowInsetsCompat.Type.displayCutout();
+
+        Insets bars = insets.getInsetsIgnoringVisibility(types);
+
         if (autoPadEnabled) {
           int left   = v.getPaddingLeft();
           int right  = v.getPaddingRight();
@@ -35,14 +49,23 @@ public class InsetsPlugin extends Plugin {
           v.setPadding(left, top, right, bottom);
           notifyInsets(bars);
           return WindowInsetsCompat.CONSUMED;
+        } else {
+          notifyInsets(bars);
+          return insets;
         }
-
-        // Read-only branch: just notify JS
-        notifyInsets(bars);
-        return insets;
       });
 
-      ViewCompat.requestApplyInsets(webView);
+      if (!targetView.isAttachedToWindow()) {
+        targetView.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
+          @Override public void onViewAttachedToWindow(View v) {
+            ViewCompat.requestApplyInsets(v);
+            v.removeOnAttachStateChangeListener(this);
+          }
+          @Override public void onViewDetachedFromWindow(View v) { }
+        });
+      }
+
+      ViewCompat.requestApplyInsets(targetView);
     });
   }
 
@@ -59,7 +82,10 @@ public class InsetsPlugin extends Plugin {
   public void get(PluginCall call) {
     View root = getActivity().getWindow().getDecorView();
     WindowInsetsCompat wi = ViewCompat.getRootWindowInsets(root);
-    Insets bars = (wi != null) ? wi.getInsets(WindowInsetsCompat.Type.systemBars()) : Insets.NONE;
+    final int types = WindowInsetsCompat.Type.statusBars()
+                   | WindowInsetsCompat.Type.navigationBars()
+                   | WindowInsetsCompat.Type.displayCutout();
+    Insets bars = (wi != null) ? wi.getInsetsIgnoringVisibility(types) : Insets.NONE;
 
     JSObject res = new JSObject();
     res.put("top", bars.top);
@@ -76,11 +102,11 @@ public class InsetsPlugin extends Plugin {
 
     autoPadEnabled = enable;
     padTop = "top".equals(edges) || "both".equals(edges);
-    padBottom = !"top".equals(edges); // bottom for 'bottom' or 'both'
+    padBottom = !"top".equals(edges);
 
     getActivity().runOnUiThread(() -> {
-      View webView = getBridge().getWebView();
-      ViewCompat.requestApplyInsets(webView);
+      View v = (targetView != null) ? targetView : getBridge().getWebView();
+      ViewCompat.requestApplyInsets(v);
       call.resolve();
     });
   }
