@@ -21,8 +21,8 @@ public class InsetsPlugin extends Plugin {
 
   private boolean autoPadEnabled = false;
   private boolean padTop = false;
-  private boolean padBottom = true; // default
-  private View targetView; // root na koji kačimo listener
+  private boolean padBottom = true;
+  private View targetView;
 
   @Override
   public void load() {
